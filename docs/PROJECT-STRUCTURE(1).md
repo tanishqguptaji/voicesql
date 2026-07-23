@@ -5,31 +5,35 @@ Status: Finalized Day 2. Folders `backend/`, `database/`, `frontend/`, `docs/`, 
 ```
 voicesql/
 ├── backend/
-│   ├── app.py               # Flask app: routes (/health, /, /query, /run-sql)
-│   ├── schema.py             # DB schema string, fed into every AI prompt
-│   ├── nl_to_sql.py           # Claude API call + system prompt (few-shot examples added Day 6)
-│   ├── sql_guard.py           # SELECT-only safety validator, reused by /query and /run-sql
-│   ├── db.py                 # sqlite3 connection + query execution helper
-│   └── requirements.txt       # flask, anthropic, python-dotenv, gunicorn
+│   ├── app.py               # ✅ Built Day 3 — Flask app: /, /health today; /query, /run-sql added Day 4/8
+│   ├── schema.py             # ✅ Built Day 3 — DB schema string, fed into every AI prompt
+│   ├── nl_to_sql.py           # ⏳ Day 4 — Claude API call + system prompt (few-shot examples added Day 6)
+│   ├── sql_guard.py           # ⏳ Day 4 — SELECT-only safety validator, reused by /query and /run-sql
+│   ├── db.py                 # ✅ Built Day 3 — sqlite3 connection + query execution helper
+│   └── requirements.txt       # ✅ Built Day 3 — flask, anthropic, python-dotenv, gunicorn
 ├── database/
-│   ├── build_db.py            # Creates and seeds sample.db (run once, Day 2/3)
-│   └── sample.db              # Generated SQLite file — committed, since it's sample data
+│   ├── build_db.py            # ✅ Built Day 3 — creates and seeds sample.db
+│   └── sample.db              # ✅ Generated Day 3 — 15 customers, 15 products, 40 orders, 80 order_items
 ├── frontend/
-│   ├── index.html            # Single page, all 6 UI states live here
-│   ├── style.css              # Layout, animations, state styling
-│   └── app.js                # Web Speech API + fetch('/query') + state machine
+│   ├── index.html            # ✅ Placeholder Day 3 — full 6-state UI built Day 4
+│   ├── style.css              # ✅ Placeholder Day 3 — full layout/animations built Day 4/7
+│   └── app.js                # ✅ Placeholder Day 3 (health check only) — voice + fetch logic built Day 4/5
 ├── docs/
-│   ├── ARCHITECTURE.md        # This design phase's architecture doc
-│   ├── SCHEMA.md              # This design phase's schema doc
-│   ├── API.md                 # This design phase's API contract
-│   ├── UI-WIREFRAMES.md       # This design phase's UI/flow doc
+│   ├── ARCHITECTURE.md        # Day 2
+│   ├── SCHEMA.md              # Day 2
+│   ├── API.md                 # Day 2
+│   ├── UI-WIREFRAMES.md       # Day 2
 │   ├── PROJECT-STRUCTURE.md    # This document
+│   ├── SETUP.md               # ✅ Built Day 3 — install/run instructions
+│   ├── ENVIRONMENT.md          # ✅ Built Day 3 — env vars, tools, config reference
+│   ├── DAY3-SUMMARY.md         # ✅ Built Day 3
 │   └── PROJECT-LOG.md          # Running daily log, updated at the end of each day
 ├── testing/
-│   └── test_questions.md      # Day 6 test question log + final curated demo question list
-├── .env                      # Local only, gitignored — holds ANTHROPIC_API_KEY
-├── .gitignore                 # Already created by GitHub on repo init (Python template)
-└── README.md                  # Project overview, finalized Day 9
+│   └── test_questions.md      # ⏳ Day 6 — test question log + final curated demo question list
+├── venv/                     # ✅ Created Day 3 — local virtual environment, gitignored
+├── .env                      # ✅ Created Day 3 — local only, gitignored — holds ANTHROPIC_API_KEY
+├── .gitignore                 # Created by GitHub on repo init (Python template); verified Day 3 to exclude .env, venv/
+└── README.md                  # ⏳ Finalized Day 9
 ```
 
 ## Folder Responsibilities

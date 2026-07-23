@@ -4,6 +4,8 @@
 
 > **Day 2 Update:** Full technical specs are now finalized in `docs/`: `ARCHITECTURE.md`, `SCHEMA.md`, `API.md`, `UI-WIREFRAMES.md`, `PROJECT-STRUCTURE.md`. Days 3–8 below should follow those documents exactly for schema fields, endpoint contracts, error responses, and UI states — no design decisions remain open. The `/run-sql` endpoint mentioned as an optional Day 8 stretch now has a full spec in `API.md` if there's time to build it.
 
+> **Day 3 Update — Day Numbering Offset:** Conversational Day 2 was used entirely for system design (no environment/setup work happened then). Conversational Day 3 completed the environment setup, dependency installation, database creation, and Hello World foundation that this Blueprint's "Day 2 — Setup" section originally described. **No scope was lost, no time was lost** — the total 9-day build budget is unchanged, everything is just offset by one day from the section labels below. Practically: when following this Blueprint from here, treat the section titled "Day 2 — Setup" as **already complete** (done on conversational Day 3), and begin executing the section titled **"Day 3 — Core Backend"** on the next conversational day. Each subsequent Blueprint section shifts by the same one-day offset. The content and technical detail of every day's section below remains fully accurate and unchanged — only which calendar day executes which section has shifted.
+
 ## Project Snapshot (same in every day's context)
 
 - **Product:** VoiceSQL — speak a question in plain English, get the SQL + the results, no SQL knowledge needed.
