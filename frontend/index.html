@@ -2,15 +2,85 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>VoiceSQL</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <main>
-    <h1>VoiceSQL</h1>
-    <p>Backend foundation is running. Voice UI arrives Day 4.</p>
-    <p id="health-status">Checking backend health...</p>
+  <main class="app">
+    <header class="app-header">
+      <h1>VoiceSQL</h1>
+      <p class="tagline">Ask your database a question — out loud.</p>
+    </header>
+
+    <!-- State: IDLE -->
+    <section id="state-idle" class="state-panel active">
+      <button id="mic-button" class="mic-button" aria-label="Start listening">
+        <svg viewBox="0 0 24 24" class="mic-icon" fill="currentColor">
+          <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3z"/>
+          <path d="M19 11a7 7 0 0 1-14 0H3a9 9 0 0 0 8 8.94V22h2v-2.06A9 9 0 0 0 21 11h-2z"/>
+        </svg>
+      </button>
+      <p class="hint">Tap the mic and ask your database a question</p>
+    </section>
+
+    <!-- State: LISTENING -->
+    <section id="state-listening" class="state-panel">
+      <div class="mic-button listening" aria-hidden="true">
+        <span class="pulse-ring"></span>
+        <span class="pulse-ring delay"></span>
+        <svg viewBox="0 0 24 24" class="mic-icon" fill="currentColor">
+          <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3z"/>
+          <path d="M19 11a7 7 0 0 1-14 0H3a9 9 0 0 0 8 8.94V22h2v-2.06A9 9 0 0 0 21 11h-2z"/>
+        </svg>
+      </div>
+      <p class="hint listening-hint">Listening...</p>
+    </section>
+
+    <!-- State: CONFIRM -->
+    <section id="state-confirm" class="state-panel">
+      <div class="transcript-box">
+        <p class="transcript-label">Did you say:</p>
+        <p id="transcript-text" class="transcript-text">—</p>
+      </div>
+      <div class="button-row">
+        <button id="ask-this-btn" class="btn btn-primary">Ask This</button>
+        <button id="try-again-btn" class="btn btn-secondary">Try Again</button>
+      </div>
+    </section>
+
+    <!-- State: PROCESSING -->
+    <section id="state-processing" class="state-panel">
+      <div class="spinner" aria-hidden="true"></div>
+      <p class="hint">Thinking...</p>
+    </section>
+
+    <!-- State: RESULTS -->
+    <section id="state-results" class="state-panel">
+      <div class="results-wrap">
+        <table id="results-table" class="results-table">
+          <thead id="results-thead"></thead>
+          <tbody id="results-tbody"></tbody>
+        </table>
+        <p id="no-results-msg" class="no-results-msg" hidden>No results found for that question.</p>
+      </div>
+
+      <details class="sql-panel">
+        <summary>Show SQL</summary>
+        <pre id="sql-text" class="sql-text"></pre>
+      </details>
+
+      <button id="ask-another-btn" class="btn btn-primary">Ask Another Question</button>
+    </section>
+
+    <!-- State: ERROR -->
+    <section id="state-error" class="state-panel">
+      <p class="error-icon" aria-hidden="true">&#9888;</p>
+      <p id="error-message" class="error-message">Something went wrong.</p>
+      <button id="error-try-again-btn" class="btn btn-primary">Try Again</button>
+    </section>
   </main>
+
   <script src="app.js"></script>
 </body>
 </html>
