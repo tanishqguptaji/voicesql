@@ -1,12 +1,8 @@
 // app.js — VoiceSQL frontend state machine.
 //
-// Day 4/5 scope (per Blueprint "Day 4 — Frontend UI"):
-//   - Real browser voice capture via the Web Speech API (free, built into Chrome)
-//   - All 6 UI states wired and working
-//   - Results table + SQL panel populated with MOCK data to validate layout
-//
-// Wiring to the real /query backend (built and tested yesterday) happens
-// in the next milestone/day per the Blueprint's "Day 5 — Integration" section.
+// Day 6 scope (per Blueprint "Day 5 — Integration"):
+//   - Real fetch('/query') call replaces yesterday's mock data
+//   - Full end-to-end loop: voice -> transcript -> real AI-generated SQL -> real results
 
 const STATES = ["idle", "listening", "confirm", "processing", "results", "error"];
 
@@ -48,8 +44,6 @@ function initRecognition() {
   };
 
   rec.onend = () => {
-    // If we're still on the listening panel with no transcript captured,
-    // the mic closed without hearing anything usable.
     if (panels.listening.classList.contains("active")) {
       showError("Didn't catch that. Try again.");
     }
@@ -74,56 +68,43 @@ function startListening() {
 
 // ---- Button wiring ----
 document.getElementById("mic-button").addEventListener("click", startListening);
-
 document.getElementById("try-again-btn").addEventListener("click", startListening);
-
-document.getElementById("error-try-again-btn").addEventListener("click", () => {
-  showState("idle");
-});
-
-document.getElementById("ask-another-btn").addEventListener("click", () => {
-  showState("idle");
-});
-
+document.getElementById("error-try-again-btn").addEventListener("click", () => showState("idle"));
+document.getElementById("ask-another-btn").addEventListener("click", () => showState("idle"));
 document.getElementById("ask-this-btn").addEventListener("click", () => {
   runQuery(lastTranscript);
 });
 
-// ---- Mock query execution (Day 4: layout validation only) ----
-// This is intentionally NOT calling the real /query endpoint yet.
-// Tomorrow this function is replaced with a real fetch('/query', ...) call.
-function runQuery(question) {
+// ---- Real backend query (replaces Day 5's mock setTimeout logic) ----
+async function runQuery(question) {
   showState("processing");
 
-  setTimeout(() => {
-    // Simulate an occasional "no results" or error case so every UI
-    // branch can be visually verified today, alongside the success path.
-    const lower = question.toLowerCase();
+  let response;
+  try {
+    response = await fetch("/query", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question }),
+    });
+  } catch (networkErr) {
+    showError("Couldn't reach the server. Check your connection and try again.");
+    return;
+  }
 
-    if (lower.includes("error") || lower.includes("fail")) {
-      showError("Couldn't safely process that question.");
-      return;
-    }
+  let data;
+  try {
+    data = await response.json();
+  } catch (parseErr) {
+    showError("Something went wrong reading the response. Try again.");
+    return;
+  }
 
-    if (lower.includes("empty") || lower.includes("nothing")) {
-      renderResults([], "SELECT * FROM customers WHERE 1 = 0");
-      return;
-    }
+  if (!response.ok) {
+    showError(data.error || "Something went wrong. Try again.");
+    return;
+  }
 
-    const mockSql =
-      "SELECT c.name, SUM(oi.quantity * oi.unit_price) AS total_spent " +
-      "FROM customers c JOIN orders o ON c.customer_id = o.customer_id " +
-      "JOIN order_items oi ON o.order_id = oi.order_id " +
-      "GROUP BY c.customer_id ORDER BY total_spent DESC LIMIT 3";
-
-    const mockResults = [
-      { name: "Chetan Mehta", total_spent: 914.82 },
-      { name: "Alice Kumar", total_spent: 780.15 },
-      { name: "Priya Reddy", total_spent: 664.40 },
-    ];
-
-    renderResults(mockResults, mockSql);
-  }, 900);
+  renderResults(data.results, data.sql);
 }
 
 function showError(message) {
@@ -167,11 +148,11 @@ function renderResults(results, sql) {
     });
   }
 
-  document.getElementById("sql-text").innerHTML = highlightSql(sql);
+  document.getElementById("sql-text").innerHTML = highlightSql(sql || "");
   showState("results");
 }
 
-// ---- Simple SQL keyword highlighting (Day 8 preview, harmless to include now) ----
+// ---- SQL keyword highlighting ----
 function highlightSql(sql) {
   const keywords = [
     "SELECT", "FROM", "WHERE", "JOIN", "GROUP BY", "ORDER BY",
