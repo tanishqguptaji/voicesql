@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VoiceSQL</title>
+  <title>VoiceSQL — Ask your database, out loud</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -13,56 +16,74 @@
       <p class="tagline">Ask your database a question — out loud.</p>
     </header>
 
+    <!-- Live region: announces state changes to screen readers without visual clutter -->
+    <p id="live-status" class="sr-only" role="status" aria-live="polite"></p>
+
     <!-- State: IDLE -->
     <section id="state-idle" class="state-panel active">
       <button id="mic-button" class="mic-button" aria-label="Start listening">
+        <span class="wave-bars idle-bars" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </span>
         <svg viewBox="0 0 24 24" class="mic-icon" fill="currentColor">
           <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3z"/>
           <path d="M19 11a7 7 0 0 1-14 0H3a9 9 0 0 0 8 8.94V22h2v-2.06A9 9 0 0 0 21 11h-2z"/>
         </svg>
       </button>
       <p class="hint">Tap the mic and ask your database a question</p>
+      <p class="hint-example">Try: "Which customer has spent the most money?"</p>
     </section>
 
     <!-- State: LISTENING -->
     <section id="state-listening" class="state-panel">
-      <div class="mic-button listening" aria-hidden="true">
-        <span class="pulse-ring"></span>
-        <span class="pulse-ring delay"></span>
+      <button id="cancel-listening-btn" class="mic-button listening" aria-label="Stop listening">
+        <span class="wave-bars listening-bars" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </span>
         <svg viewBox="0 0 24 24" class="mic-icon" fill="currentColor">
           <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3z"/>
           <path d="M19 11a7 7 0 0 1-14 0H3a9 9 0 0 0 8 8.94V22h2v-2.06A9 9 0 0 0 21 11h-2z"/>
         </svg>
-      </div>
-      <p class="hint listening-hint">Listening...</p>
+      </button>
+      <p class="hint listening-hint">Listening…</p>
+      <p class="hint-example">Tap the mic again to cancel</p>
     </section>
 
     <!-- State: CONFIRM -->
     <section id="state-confirm" class="state-panel">
       <div class="transcript-box">
-        <p class="transcript-label">Did you say:</p>
+        <p class="transcript-label">Did you say</p>
         <p id="transcript-text" class="transcript-text">—</p>
       </div>
       <div class="button-row">
-        <button id="ask-this-btn" class="btn btn-primary">Ask This</button>
-        <button id="try-again-btn" class="btn btn-secondary">Try Again</button>
+        <button id="ask-this-btn" class="btn btn-primary">Ask this</button>
+        <button id="try-again-btn" class="btn btn-secondary">Try again</button>
       </div>
     </section>
 
     <!-- State: PROCESSING -->
     <section id="state-processing" class="state-panel">
       <div class="spinner" aria-hidden="true"></div>
-      <p class="hint">Thinking...</p>
+      <p class="hint">Thinking…</p>
+      <p class="hint-example">Translating your question into SQL</p>
     </section>
 
     <!-- State: RESULTS -->
     <section id="state-results" class="state-panel">
       <div class="results-wrap">
         <table id="results-table" class="results-table">
+          <caption class="sr-only">Query results</caption>
           <thead id="results-thead"></thead>
           <tbody id="results-tbody"></tbody>
         </table>
-        <p id="no-results-msg" class="no-results-msg" hidden>No results found for that question.</p>
+        <div id="no-results-msg" class="no-results-msg" hidden>
+          <svg viewBox="0 0 24 24" class="empty-icon" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6">
+            <circle cx="11" cy="11" r="7"/>
+            <path d="M21 21l-4.3-4.3" stroke-linecap="round"/>
+          </svg>
+          <p>No results found for that question.</p>
+          <p class="no-results-sub">The SQL below ran successfully — it just didn't match any rows. Try rephrasing.</p>
+        </div>
       </div>
 
       <details class="sql-panel">
@@ -70,14 +91,18 @@
         <pre id="sql-text" class="sql-text"></pre>
       </details>
 
-      <button id="ask-another-btn" class="btn btn-primary">Ask Another Question</button>
+      <button id="ask-another-btn" class="btn btn-primary">Ask another question</button>
     </section>
 
     <!-- State: ERROR -->
     <section id="state-error" class="state-panel">
-      <p class="error-icon" aria-hidden="true">&#9888;</p>
+      <svg viewBox="0 0 24 24" class="error-icon" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M12 8v5" stroke-linecap="round"/>
+        <circle cx="12" cy="16" r="0.75" fill="currentColor" stroke="none"/>
+      </svg>
       <p id="error-message" class="error-message">Something went wrong.</p>
-      <button id="error-try-again-btn" class="btn btn-primary">Try Again</button>
+      <button id="error-try-again-btn" class="btn btn-primary">Try again</button>
     </section>
   </main>
 

@@ -1,26 +1,54 @@
 // app.js — VoiceSQL frontend state machine.
 //
-// Day 6 scope (per Blueprint "Day 5 — Integration"):
-//   - Real fetch('/query') call replaces yesterday's mock data
-//   - Full end-to-end loop: voice -> transcript -> real AI-generated SQL -> real results
+// Day 7 polish pass (per Sprint Workbook "Product Refinement & UX"):
+//   - aria-live announcements for screen readers on every state change
+//   - Cancel button while listening (stops recognition cleanly)
+//   - Safety timeout so "Thinking..." never gets stuck indefinitely
+//   - Consistent 2-decimal number formatting in results (fixes 2490.2 vs 2490.20)
+//
+// Core logic (fetch('/query'), state machine) unchanged from Day 6.
 
 const STATES = ["idle", "listening", "confirm", "processing", "results", "error"];
+
+const STATE_ANNOUNCEMENTS = {
+  idle: "Ready. Tap the mic to ask a question.",
+  listening: "Listening for your question.",
+  confirm: "Please confirm your question.",
+  processing: "Processing your question.",
+  results: "Results are ready.",
+  error: "Something went wrong.",
+};
 
 const panels = {};
 STATES.forEach((s) => {
   panels[s] = document.getElementById(`state-${s}`);
 });
 
+const liveStatus = document.getElementById("live-status");
+
+// Safety timeout: if processing hangs longer than this, fail gracefully
+// instead of leaving the user staring at a spinner forever.
+const PROCESSING_TIMEOUT_MS = 15000;
+let processingTimeoutId = null;
+
 function showState(name) {
   STATES.forEach((s) => {
     panels[s].classList.toggle("active", s === name);
   });
+  if (liveStatus && STATE_ANNOUNCEMENTS[name]) {
+    liveStatus.textContent = STATE_ANNOUNCEMENTS[name];
+  }
+  if (name !== "processing" && processingTimeoutId) {
+    clearTimeout(processingTimeoutId);
+    processingTimeoutId = null;
+  }
 }
 
 // ---- Web Speech API setup ----
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognition = null;
 let lastTranscript = "";
+let userCancelledListening = false;
 
 function initRecognition() {
   if (!SpeechRecognition) {
@@ -39,12 +67,16 @@ function initRecognition() {
     showState("confirm");
   };
 
-  rec.onerror = () => {
+  rec.onerror = (event) => {
+    if (event.error === "aborted" || userCancelledListening) {
+      showState("idle");
+      return;
+    }
     showError("Didn't catch that. Try again.");
   };
 
   rec.onend = () => {
-    if (panels.listening.classList.contains("active")) {
+    if (panels.listening.classList.contains("active") && !userCancelledListening) {
       showError("Didn't catch that. Try again.");
     }
   };
@@ -57,6 +89,7 @@ function startListening() {
     showError("Voice input isn't supported in this browser. Please use Chrome.");
     return;
   }
+  userCancelledListening = false;
   recognition = initRecognition();
   showState("listening");
   try {
@@ -66,8 +99,17 @@ function startListening() {
   }
 }
 
+function cancelListening() {
+  userCancelledListening = true;
+  if (recognition) {
+    recognition.abort();
+  }
+  showState("idle");
+}
+
 // ---- Button wiring ----
 document.getElementById("mic-button").addEventListener("click", startListening);
+document.getElementById("cancel-listening-btn").addEventListener("click", cancelListening);
 document.getElementById("try-again-btn").addEventListener("click", startListening);
 document.getElementById("error-try-again-btn").addEventListener("click", () => showState("idle"));
 document.getElementById("ask-another-btn").addEventListener("click", () => showState("idle"));
@@ -75,9 +117,13 @@ document.getElementById("ask-this-btn").addEventListener("click", () => {
   runQuery(lastTranscript);
 });
 
-// ---- Real backend query (replaces Day 5's mock setTimeout logic) ----
+// ---- Real backend query ----
 async function runQuery(question) {
   showState("processing");
+
+  processingTimeoutId = setTimeout(() => {
+    showError("That took longer than expected. Try again.");
+  }, PROCESSING_TIMEOUT_MS);
 
   let response;
   try {
@@ -112,6 +158,17 @@ function showError(message) {
   showState("error");
 }
 
+// Formats a cell value for display. Non-integer numbers are shown with
+// exactly 2 decimal places so "2490.2" and "2490.20" never look
+// inconsistent side by side (the underlying value is already correct —
+// this is purely a display-layer fix from Day 7's UI review).
+function formatCell(value) {
+  if (typeof value === "number" && !Number.isInteger(value)) {
+    return value.toFixed(2);
+  }
+  return value;
+}
+
 function renderResults(results, sql) {
   const thead = document.getElementById("results-thead");
   const tbody = document.getElementById("results-tbody");
@@ -141,7 +198,7 @@ function renderResults(results, sql) {
       const tr = document.createElement("tr");
       columns.forEach((col) => {
         const td = document.createElement("td");
-        td.textContent = row[col];
+        td.textContent = formatCell(row[col]);
         tr.appendChild(td);
       });
       tbody.appendChild(tr);
@@ -155,8 +212,9 @@ function renderResults(results, sql) {
 // ---- SQL keyword highlighting ----
 function highlightSql(sql) {
   const keywords = [
-    "SELECT", "FROM", "WHERE", "JOIN", "GROUP BY", "ORDER BY",
-    "LIMIT", "AS", "ON", "AND", "OR", "SUM", "COUNT", "AVG",
+    "SELECT", "FROM", "WHERE", "JOIN", "GROUP BY", "ORDER BY", "HAVING",
+    "LIMIT", "AS", "ON", "AND", "OR", "SUM", "COUNT", "AVG", "ROUND",
+    "DISTINCT", "DESC", "ASC",
   ];
   let escaped = sql
     .replace(/&/g, "&amp;")

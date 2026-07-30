@@ -3,45 +3,86 @@
   --secondary: #00A896;
   --accent: #02C39A;
   --dark: #0B3D3D;
-  --bg: #f4faf9;
+  --bg-top: #f4faf9;
+  --bg-bottom: #e7f4f1;
   --text-dark: #16302e;
-  --text-muted: #4a6b67;
-  --error: #c0392b;
+  --text-muted: #3f5f5b;
+  --error: #c23b3b;
   --white: #ffffff;
+  --border: #cde9e4;
+  --font-display: "Space Grotesk", "Segoe UI", sans-serif;
+  --font-body: "Inter", -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", "Consolas", "Courier New", monospace;
 }
 
 * {
   box-sizing: border-box;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, "Segoe UI", Calibri, sans-serif;
-  background: var(--bg);
+  font-family: var(--font-body);
+  background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
   color: var(--text-dark);
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1rem 3.5rem;
+  padding: 2rem 1.25rem 4rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Visible keyboard focus everywhere, mouse clicks stay clean */
+button:focus-visible,
+summary:focus-visible {
+  outline: 2.5px solid var(--secondary);
+  outline-offset: 3px;
+  border-radius: 6px;
 }
 
 .app {
   width: 100%;
-  max-width: 480px;
+  max-width: 460px;
   text-align: center;
 }
 
+.app-header {
+  margin-bottom: 2.75rem;
+}
+
 .app-header h1 {
+  font-family: var(--font-display);
   color: var(--primary);
-  font-size: 2.25rem;
-  margin: 0 0 0.25rem;
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.35rem;
 }
 
 .tagline {
   color: var(--text-muted);
-  margin: 0 0 2.5rem;
+  margin: 0;
   font-size: 0.95rem;
+  font-weight: 500;
 }
 
 /* State panels: only one visible at a time */
@@ -49,8 +90,8 @@ body {
   display: none;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
-  animation: fadeIn 0.25s ease-out;
+  gap: 0.9rem;
+  animation: fadeIn 0.28s ease-out;
 }
 
 .state-panel.active {
@@ -58,15 +99,15 @@ body {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 /* Mic button */
 .mic-button {
   position: relative;
-  width: 96px;
-  height: 96px;
+  width: 104px;
+  height: 104px;
   border-radius: 50%;
   border: none;
   background: var(--primary);
@@ -75,7 +116,8 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease;
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 6px 20px rgba(2, 128, 144, 0.22);
 }
 
 .mic-button:hover {
@@ -96,77 +138,129 @@ body {
 
 .mic-button.listening {
   background: var(--accent);
-  cursor: default;
+  box-shadow: 0 6px 24px rgba(2, 195, 154, 0.32);
 }
 
-.pulse-ring {
+/* Signature element: waveform bars around the mic, standing in for the
+   generic pulsing-ring cliché — ties the micro-interaction directly to
+   the product's voice-input concept instead of a decorative afterthought. */
+.wave-bars {
   position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 3px solid var(--accent);
-  animation: pulse 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  inset: -14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.wave-bars span {
+  display: block;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent);
   opacity: 0;
 }
 
-.pulse-ring.delay {
-  animation-delay: 0.8s;
+.idle-bars span {
+  height: 6px;
+  opacity: 0.35;
+  animation: idleBreathe 2.4s ease-in-out infinite;
 }
 
-@keyframes pulse {
-  0% { transform: scale(1); opacity: 0.6; }
-  100% { transform: scale(1.9); opacity: 0; }
+.idle-bars span:nth-child(1) { animation-delay: 0s; }
+.idle-bars span:nth-child(2) { animation-delay: 0.15s; }
+.idle-bars span:nth-child(3) { animation-delay: 0.3s; }
+.idle-bars span:nth-child(4) { animation-delay: 0.15s; }
+.idle-bars span:nth-child(5) { animation-delay: 0s; }
+
+@keyframes idleBreathe {
+  0%, 100% { height: 5px; opacity: 0.25; }
+  50% { height: 12px; opacity: 0.45; }
+}
+
+.listening-bars span {
+  height: 14px;
+  opacity: 0.9;
+  background: var(--white);
+  animation: waveBounce 0.9s ease-in-out infinite;
+}
+
+.listening-bars span:nth-child(1) { animation-delay: 0s; }
+.listening-bars span:nth-child(2) { animation-delay: 0.12s; }
+.listening-bars span:nth-child(3) { animation-delay: 0.24s; }
+.listening-bars span:nth-child(4) { animation-delay: 0.12s; }
+.listening-bars span:nth-child(5) { animation-delay: 0s; }
+
+@keyframes waveBounce {
+  0%, 100% { height: 10px; }
+  50% { height: 34px; }
 }
 
 .hint {
-  color: var(--text-muted);
-  font-size: 0.95rem;
+  color: var(--text-dark);
+  font-size: 0.98rem;
+  font-weight: 500;
   margin: 0;
 }
 
+.hint-example {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  margin: -0.4rem 0 0;
+}
+
 .listening-hint {
-  color: var(--accent);
+  color: var(--dark);
   font-weight: 600;
 }
 
 /* Confirm state */
 .transcript-box {
   background: var(--white);
-  border: 1px solid #cde9e4;
-  border-radius: 12px;
-  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.4rem 1.6rem;
   width: 100%;
+  box-shadow: 0 2px 10px rgba(11, 61, 61, 0.05);
 }
 
 .transcript-label {
-  margin: 0 0 0.4rem;
-  font-size: 0.8rem;
+  margin: 0 0 0.45rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
+  font-weight: 600;
 }
 
 .transcript-text {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 600;
   color: var(--text-dark);
+  line-height: 1.4;
 }
 
 .button-row {
   display: flex;
   gap: 0.75rem;
   width: 100%;
+  flex-wrap: wrap;
 }
 
 .btn {
   flex: 1;
-  padding: 0.75rem 1.25rem;
-  border-radius: 8px;
+  min-width: 120px;
+  padding: 0.8rem 1.25rem;
+  border-radius: 9px;
   border: none;
+  font-family: var(--font-body);
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease, transform 0.1s ease;
+  transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
 }
 
 .btn:active {
@@ -176,6 +270,7 @@ body {
 .btn-primary {
   background: var(--primary);
   color: white;
+  box-shadow: 0 3px 12px rgba(2, 128, 144, 0.25);
 }
 
 .btn-primary:hover {
@@ -194,8 +289,8 @@ body {
 
 /* Processing state */
 .spinner {
-  width: 48px;
-  height: 48px;
+  width: 46px;
+  height: 46px;
   border: 4px solid #d7ece8;
   border-top-color: var(--primary);
   border-radius: 50%;
@@ -211,8 +306,9 @@ body {
   width: 100%;
   overflow-x: auto;
   background: var(--white);
-  border-radius: 12px;
-  border: 1px solid #cde9e4;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 10px rgba(11, 61, 61, 0.05);
 }
 
 .results-table {
@@ -225,15 +321,21 @@ body {
   background: var(--primary);
   color: white;
   text-align: left;
-  padding: 0.6rem 0.9rem;
+  padding: 0.65rem 0.9rem;
   font-weight: 600;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
   white-space: nowrap;
 }
 
+.results-table th:first-child { border-top-left-radius: 14px; }
+.results-table th:last-child { border-top-right-radius: 14px; }
+
 .results-table td {
-  padding: 0.55rem 0.9rem;
+  padding: 0.6rem 0.9rem;
   border-top: 1px solid #e6f2f0;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .results-table tr:nth-child(even) td {
@@ -241,18 +343,51 @@ body {
 }
 
 .no-results-msg {
-  padding: 1.5rem;
+  padding: 2.25rem 1.5rem;
   color: var(--text-muted);
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Higher specificity than .no-results-msg alone, so the [hidden]
+   attribute actually hides it — a class-based display rule otherwise
+   silently overrides the browser's default [hidden] behavior. */
+.no-results-msg[hidden] {
+  display: none;
+}
+
+.no-results-msg p {
+  margin: 0;
+}
+
+.no-results-msg p:nth-of-type(1) {
+  color: var(--text-dark);
+  font-weight: 600;
+  font-size: 0.98rem;
+}
+
+.no-results-sub {
+  font-size: 0.82rem;
+  max-width: 320px;
+}
+
+.empty-icon {
+  width: 34px;
+  height: 34px;
+  color: var(--text-muted);
+  opacity: 0.6;
 }
 
 .sql-panel {
   width: 100%;
   text-align: left;
   background: var(--white);
-  border: 1px solid #cde9e4;
-  border-radius: 10px;
-  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.7rem 1rem;
 }
 
 .sql-panel summary {
@@ -260,18 +395,20 @@ body {
   font-weight: 600;
   color: var(--primary);
   font-size: 0.9rem;
+  list-style: revert;
 }
 
 .sql-text {
-  margin: 0.6rem 0 0;
+  margin: 0.7rem 0 0;
   white-space: pre-wrap;
   word-break: break-word;
-  font-family: "Consolas", "Courier New", monospace;
-  font-size: 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+  line-height: 1.55;
   color: var(--text-dark);
-  background: #f4faf9;
-  padding: 0.75rem;
-  border-radius: 6px;
+  background: var(--bg-top);
+  padding: 0.85rem 0.95rem;
+  border-radius: 8px;
 }
 
 .sql-keyword {
@@ -281,15 +418,17 @@ body {
 
 /* Error state */
 .error-icon {
-  font-size: 2rem;
-  margin: 0;
+  width: 38px;
+  height: 38px;
   color: var(--error);
 }
 
 .error-message {
   color: var(--error);
-  font-weight: 500;
+  font-weight: 600;
   margin: 0;
+  font-size: 0.98rem;
+  max-width: 340px;
 }
 
 /* Footer */
@@ -299,13 +438,28 @@ body {
   left: 0;
   right: 0;
   text-align: center;
-  padding: 0.75rem 1rem;
-  background: rgba(244, 250, 249, 0.9);
+  padding: 0.85rem 1rem;
+  background: rgba(244, 250, 249, 0.92);
   backdrop-filter: blur(4px);
+  border-top: 1px solid rgba(205, 233, 228, 0.6);
 }
 
 .app-footer p {
   margin: 0;
   font-size: 0.78rem;
   color: var(--text-muted);
+}
+
+/* Narrow-screen tightening */
+@media (max-width: 380px) {
+  .app-header h1 {
+    font-size: 2.1rem;
+  }
+  .mic-button {
+    width: 92px;
+    height: 92px;
+  }
+  .btn {
+    min-width: 100%;
+  }
 }
