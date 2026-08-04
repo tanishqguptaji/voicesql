@@ -118,7 +118,17 @@ document.getElementById("ask-this-btn").addEventListener("click", () => {
 });
 
 // ---- Real backend query ----
+const MAX_QUESTION_LENGTH = 500; // must match backend/app.py's MAX_QUESTION_LENGTH
+
 async function runQuery(question) {
+  // Client-side mirror of the server's length check — catches the
+  // (rare, since this is spoken input) case instantly instead of
+  // making a network round trip just to get rejected.
+  if (question.length > MAX_QUESTION_LENGTH) {
+    showError("That question is too long, try rephrasing more briefly.");
+    return;
+  }
+
   showState("processing");
 
   processingTimeoutId = setTimeout(() => {

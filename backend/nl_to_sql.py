@@ -10,8 +10,11 @@ See docs/ARCHITECTURE.md and docs/DAY4-SUMMARY.md for the full story.
 
 Day 7 update: expanded few-shot examples (3-table joins, HAVING-style
 filters, more date phrasings) and added ROUND(...,2) guidance for money
-calculations to fix float-precision display bugs (e.g. 914.8199999999999).
-See docs/DAY7-SUMMARY.md and testing/test_questions.md.
+calculations to fix float-precision display bugs.
+
+Day 8 hardening pass: added an explicit request timeout so a hung Groq
+call can't tie up a Flask worker indefinitely, and sanitized the debug
+log so raw exception text is never printed in full.
 
 Per docs/API.md: this function returns raw SQL text. It does NOT validate
 safety (that's sql_guard.py) and does NOT execute anything (that's db.py).
@@ -25,6 +28,7 @@ from schema import DATABASE_SCHEMA
 from sql_guard import clean_sql
 
 MODEL = "openai/gpt-oss-20b"
+REQUEST_TIMEOUT_SECONDS = 10.0
 
 TODAY = date.today().isoformat()
 
@@ -111,13 +115,13 @@ def _get_client():
     if not api_key:
         raise NLToSQLError("GROQ_API_KEY is not configured.")
 
-    _client_cache = Groq(api_key=api_key)
+    _client_cache = Groq(api_key=api_key, timeout=REQUEST_TIMEOUT_SECONDS)
     return _client_cache
 
 
 def translate(question: str) -> str:
     """Sends the question to Groq and returns a cleaned SQL string.
-    Raises NLToSQLError if the API call fails.
+    Raises NLToSQLError if the API call fails or times out.
     """
     client = _get_client()
 
@@ -131,8 +135,8 @@ def translate(question: str) -> str:
             ],
         )
     except Exception as e:
-        print(f"[DEBUG] Groq API call failed: {e}")
-        raise NLToSQLError(f"Groq API call failed: {e}")
+        print(f"[DEBUG] Groq API call failed: {type(e).__name__}: {str(e)[:150]}")
+        raise NLToSQLError(f"Groq API call failed: {type(e).__name__}")
 
     raw_text = response.choices[0].message.content or ""
     return clean_sql(raw_text)
